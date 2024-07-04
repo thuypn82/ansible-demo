@@ -1,10 +1,56 @@
 ---
 - hosts: all
   vars:
-    var: str_os_ver
-  become: true
+    var: directory_data
+    var: check_dir
+    var: check_os
   tasks:
-    - name: printe os
+#  - block:
+### TAO THU MUCJ /TMP/AV
+    - name: Check directories
+      stat:
+        path: '/data_repo'
+      register: directory_data
+
+    - debug: var=directory_data.stat.path
+    - name: Create directory if it doesn't already exist
+      file:
+        path: '/data_repo'
+        state: directory
+      when: not directory_data.stat.exists
+
+### MOVE REPO CU TO /data_repo
+    - name: check exit .repo and move
+      find:
+        paths: /etc/apt/source.list
+        patterns: "*.repo"
+      register: check_dir
+
+    - command:
+        cmd: cp -rf /etc/apt/source.list /data_repo
+      when: check_dir.matched != 0
+      ignore_errors: true
+
+### check os version
+    - name: Check OS version
       command:
         cmd: lsb_release -a
-      register: str_os_ver
+      register: check_os
+    - debug:
+        var: check_os
+      ignore_errors: true
+
+### Copy file
+    - name: Check directories
+      stat:
+        path: '/etc/apt/source.list'
+      register: directory_data
+    - command:
+        cmd: rm -fr /etc/apt/source.list
+      when: directory_data.stat.exists
+
+    - name: copy file cai dat
+      copy:
+        src: /etc/ansible/playbook/data/sources.list.jammy
+        dest: /etc/apt/sources.list
+      when: check_os.stdout.find('jammy')!=-1
