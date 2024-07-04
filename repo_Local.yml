@@ -1,0 +1,10 @@
+---
+- hosts: all
+  vars:
+    var: str_os_ver
+  become: true
+  tasks:
+    - name: printe os
+      command:
+        cmd: lsb_release -a
+    register: str_os_ver
